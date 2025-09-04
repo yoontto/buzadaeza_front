@@ -1,11 +1,17 @@
 // src/api/txns.js
-export async function createTxn({ merchant, paymentMethod, amount }) {
-    const res = await fetch('/api/txns', {
+const rawBase = import.meta.env.VITE_API_BASE || '';
+const API_BASE = rawBase.endsWith('/') ? rawBase.slice(0, -1) : rawBase;
+
+export async function createTxn({ merchant, paymentMethods, paymentMethod, amount }) {
+    const res = await fetch(`${API_BASE}/api/txns`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             merchant,
-            paymentMethod, // 문자열 enum 값 (예: "CARD")
+            // 서버 스펙: paymentMethods(List<PaymentMethod>)
+            paymentMethods: Array.isArray(paymentMethods)
+                ? paymentMethods
+                : (paymentMethod ? [paymentMethod] : []),
             amount: Number(amount), // 정수 Long
         }),
     });

@@ -30,6 +30,13 @@ body {
   min-height: 100vh;
 }
 
+/* iOS Safari: prevent zoom on inputs by keeping font-size >= 16px */
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
