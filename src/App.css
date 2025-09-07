@@ -5,6 +5,16 @@
   text-align: center;
 }
 
+/* number 화살표 제거 (크로스 브라우저) - 우리는 텍스트 입력으로 대체했지만 혹시 모를 곳 대비 */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;

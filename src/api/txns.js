@@ -2,18 +2,12 @@
 const rawBase = import.meta.env.VITE_API_BASE || '';
 const API_BASE = rawBase.endsWith('/') ? rawBase.slice(0, -1) : rawBase;
 
-export async function createTxn({ merchant, paymentMethods, paymentMethod, amount }) {
+// payload를 그대로 전달하여 서버 스펙 변화에 유연하게 대응
+export async function createTxn(payload) {
     const res = await fetch(`${API_BASE}/api/txns`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            merchant,
-            // 서버 스펙: paymentMethods(List<PaymentMethod>)
-            paymentMethods: Array.isArray(paymentMethods)
-                ? paymentMethods
-                : (paymentMethod ? [paymentMethod] : []),
-            amount: Number(amount), // 정수 Long
-        }),
+        body: JSON.stringify(payload),
     });
 
     if (!res.ok) {
