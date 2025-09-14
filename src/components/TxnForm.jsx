@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { createTxn } from '../api/txns';
 
+// 현재 모듈 내에서 사용하는 상수 값.
+// todo: 상수값을 별도의 파일로 분리 or 데이터베이스에서 가져오기
 const DEFAULT_METHODS = [
     { code: 'CARD', displayName: '카드' },
     { code: 'DEBIT', displayName: '체크카드' },
@@ -17,15 +19,16 @@ const PLATFORMS = [
     { code: 'TOSS', displayName: '토스페이' },
   ];
 
+
 export default function TxnForm({ methods = DEFAULT_METHODS, onCreated }) {
     const [merchant, setMerchant] = useState('');
     const [usedAt, setUsedAt] = useState('');
     // 총 지출액: raw 숫자 문자열과 표시용 포맷 문자열을 분리 관리
     const [amount, setAmount] = useState('');
     const [amountDisplay, setAmountDisplay] = useState('');
-    const [multiPay, setMultiPay] = useState(true);
-    const [selectedMethods, setSelectedMethods] = useState([]); // array of method codes
-    const [methodAmounts, setMethodAmounts] = useState({}); // code -> amount(string)
+    const [multiPay, setMultiPay] = useState(false);
+    const [selectedMethods, setSelectedMethods] = useState([]); // 배열
+    const [methodAmounts, setMethodAmounts] = useState({}); // 객체: 키: 결제수단 코드, 값: 지출액
     const [platform, setPlatform] = useState('NAVERPAY');
     const [platformEnabled, setPlatformEnabled] = useState(false);
     const [memo, setMemo] = useState('');
@@ -65,10 +68,13 @@ export default function TxnForm({ methods = DEFAULT_METHODS, onCreated }) {
             return;
         }
         setLoading(true);
+
         try {
             // payments 생성: 선택된 순서대로 seqNo 부여, 표시명 사용
             const totalAmount = Number(amount);
             let payments = [];
+
+            // 다중결제수단 사용 시
             if (multiPay) {
                 const amountsByCode = { ...methodAmounts };
                 // 누락된 마지막 금액 보정 (2개/3개 구성 시)
@@ -88,17 +94,18 @@ export default function TxnForm({ methods = DEFAULT_METHODS, onCreated }) {
                     const meta = methods.find((m) => m.code === code);
                     return {
                         method: code,
-                        amount: Number(amountsByCode[code] || '0'),
-                        seqNo: idx + 1,
+                        mount: Number(amountsByCode[code] || '0'),
+                        seqNo: idx + 1
                     };
                 });
-            } else if (selectedMethods[0]) {
+            } else if (selectedMethods[0]) {    // 단일결제수단 사용 시
                 const code = selectedMethods[0];
                 const meta = methods.find((m) => m.code === code);
                 payments = [{ method: code, amount: totalAmount, seqNo: 1 }];
             }
 
-            const created = await createTxn({
+            // 거래 백엔드로 보내기
+            const created = await createTxn({   //await : (동기처리) 끝날때까지 기다렸다가 결과 받아옴
                 merchant: merchant.trim(),
                 memo: memo.trim(),
                 usedAt,
@@ -106,6 +113,7 @@ export default function TxnForm({ methods = DEFAULT_METHODS, onCreated }) {
                 platformCode: platformEnabled ? platform : undefined,
                 payments,
             });
+
             setResult(created);
             if (typeof onCreated === 'function') onCreated(created);
             setMerchant('');
